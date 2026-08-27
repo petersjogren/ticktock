@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>TickTock — Mechanical Word Clock</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -21,25 +21,40 @@
       --flap-lit: #1e1a16;
       --ink: #f3ead6;
       --ink-dim: #8a8170;
-      --gap: 8px;
+      --gap: clamp(4px, 1.2vw, 8px);
       --flip: 340ms;
-      --h: 88px;
+      --h: clamp(48px, 13vw, 88px);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html {
+      width: 100%;
+      overflow-x: hidden;
+    }
     html, body {
       min-height: 100%;
+      min-height: 100dvh;
       background: var(--wall);
       color: var(--ink);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
 
     body {
       min-height: 100vh;
+      min-height: 100dvh;
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
       place-items: center;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
       font-family: "Cormorant Garamond", Georgia, serif;
+      padding:
+        max(12px, env(safe-area-inset-top))
+        max(12px, env(safe-area-inset-right))
+        max(12px, env(safe-area-inset-bottom))
+        max(12px, env(safe-area-inset-left));
       background:
         radial-gradient(ellipse 80% 70% at 50% 42%, #e2d2b4 0%, #c4ad8a 48%, #8f7354 100%);
     }
@@ -59,17 +74,21 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      transform: scale(min(1, (100vw - 40px) / 920, (100vh - 40px) / 560));
+      width: 100%;
+      max-width: 920px;
+      min-width: 0;
+      justify-self: center;
       transform-origin: center center;
     }
 
     /* hanging hardware — ring + two cords */
     .hanger {
       position: relative;
-      width: 220px;
-      height: 78px;
+      width: min(220px, 46vw);
+      height: clamp(48px, 10vw, 78px);
       cursor: pointer;
       z-index: 2;
+      -webkit-tap-highlight-color: transparent;
     }
     .hanger .ring {
       position: absolute;
@@ -86,9 +105,9 @@
     }
     .hanger .cord {
       position: absolute;
-      top: 14px;
+      top: 30%;
       width: 7px;
-      height: 68px;
+      height: 80%;
       background:
         linear-gradient(90deg, #4a2c18 0%, #8a5a32 40%, #c48a54 50%, #8a5a32 60%, #4a2c18 100%);
       border-radius: 2px;
@@ -100,10 +119,11 @@
 
     .plaque {
       position: relative;
-      width: max-content;
-      max-width: 96vw;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
       margin-top: -14px;
-      padding: 26px 28px 18px;
+      padding: clamp(14px, 3vw, 26px) clamp(12px, 3vw, 28px) clamp(12px, 2vw, 18px);
       background:
         linear-gradient(90deg, #2a1810, #4a2e1c 8%, #3a2416 50%, #4a2e1c 92%, #2a1810);
       border-radius: 5px;
@@ -115,10 +135,9 @@
     }
 
     .plaque::before {
-      /* inner brass bezel */
       content: "";
       position: absolute;
-      inset: 14px;
+      inset: clamp(8px, 1.6vw, 14px);
       border: 2px solid var(--brass-dim);
       border-radius: 3px;
       box-shadow:
@@ -151,12 +170,14 @@
       background:
         linear-gradient(180deg, #1a1612 0%, #0e0c0a 100%);
       border-radius: 2px;
-      padding: 22px 20px 18px;
+      padding: clamp(12px, 2.4vw, 22px) clamp(10px, 2.2vw, 20px) clamp(10px, 2vw, 18px);
       box-shadow: inset 0 8px 18px rgba(0,0,0,.55);
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      width: 764px;
+      gap: clamp(6px, 1.4vw, 10px);
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .row {
@@ -164,45 +185,45 @@
       gap: var(--gap);
       align-items: stretch;
       justify-content: center;
+      width: 100%;
+      min-width: 0;
     }
 
     .mod {
       position: relative;
-      width: var(--w, 118px);
+      flex: var(--flex, 1.1) 1 0%;
+      width: 0;
+      min-width: 0;
       height: var(--h);
       perspective: 640px;
-      flex: 0 0 auto;
-      transition: width 280ms ease, margin 280ms ease, opacity 220ms ease;
+      -webkit-perspective: 640px;
     }
     .mod.blank {
-      width: 0 !important;
-      margin-right: calc(var(--gap) * -1);
-      opacity: 0;
-      overflow: hidden;
-      pointer-events: none;
+      display: none;
     }
 
-    .mod[data-key="seconds"] { --w: 92px; }
+    .mod[data-key="seconds"] { --flex: 0.95; }
     .mod[data-key="it"],
-    .mod[data-key="is"] { --w: 64px; }
-    .mod[data-key="special"] { --w: 148px; }
-    .mod[data-key="tens"] { --w: 128px; }
-    .mod[data-key="units"] { --w: 128px; }
-    .mod[data-key="teen"] { --w: 92px; }
-    .mod[data-key="min_word"] { --w: 148px; }
-    .mod[data-key="relation"] { --w: 92px; }
-    .mod[data-key="hour"] { --w: 128px; }
-    .mod[data-key="oclock"] { --w: 148px; }
+    .mod[data-key="is"] { --flex: 0.55; }
+    .mod[data-key="special"] { --flex: 1.45; }
+    .mod[data-key="tens"] { --flex: 1.25; }
+    .mod[data-key="units"] { --flex: 1.25; }
+    .mod[data-key="teen"] { --flex: 0.9; }
+    .mod[data-key="min_word"] { --flex: 1.45; }
+    .mod[data-key="relation"] { --flex: 0.9; }
+    .mod[data-key="hour"] { --flex: 1.25; }
+    .mod[data-key="oclock"] { --flex: 1.45; }
 
     .card {
       position: relative;
       width: 100%;
       height: 100%;
       transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
       font-family: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
       font-weight: 600;
-      font-size: 32px;
-      letter-spacing: 0.08em;
+      font-size: clamp(11px, 4.2vw, 32px);
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--ink);
     }
@@ -260,14 +281,17 @@
       top: 0;
       border-radius: 4px 4px 0 0;
       transform-origin: bottom center;
+      -webkit-transform-origin: bottom center;
       background: linear-gradient(180deg, #2c2620 0%, #161310 100%);
     }
     .anim.bot {
       bottom: 0;
       border-radius: 0 0 4px 4px;
       transform-origin: top center;
+      -webkit-transform-origin: top center;
       background: linear-gradient(180deg, #1a1612 0%, #100e0c 100%);
       transform: rotateX(90deg);
+      -webkit-transform: rotateX(90deg);
     }
 
     .mod.go .anim { display: block; }
@@ -287,32 +311,56 @@
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin-top: 14px;
-      padding: 0 8px;
+      gap: 8px;
+      margin-top: clamp(8px, 1.6vw, 14px);
+      padding: 0 4px;
       color: var(--brass);
-      letter-spacing: 0.42em;
-      font-size: 13px;
+      letter-spacing: 0.28em;
+      font-size: clamp(9px, 2.4vw, 13px);
       text-transform: uppercase;
       opacity: 0.85;
+      min-width: 0;
+      width: 100%;
+    }
+    .mark > span {
+      flex: 0 1 auto;
+      min-width: 0;
     }
     .mark em {
       font-style: italic;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.14em;
       opacity: 0.7;
     }
     .mark .hint {
-      letter-spacing: 0.16em;
-      font-size: 11px;
+      flex: 1 1 auto;
+      letter-spacing: 0.1em;
+      font-size: 0.9em;
       opacity: 0.55;
       font-family: "Barlow Condensed", sans-serif;
+      text-align: center;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .caption {
-      margin-top: 18px;
+      margin-top: clamp(10px, 2vw, 18px);
       color: #6a5340;
-      font-size: 15px;
-      letter-spacing: 0.08em;
+      font-size: clamp(12px, 3.4vw, 15px);
+      letter-spacing: 0.06em;
       text-align: center;
+      width: 100%;
+      max-width: 100%;
+      padding: 0 8px;
+      text-wrap: pretty;
+      overflow-wrap: break-word;
+      white-space: normal;
+    }
+
+    @media (max-width: 520px) {
+      .mark { letter-spacing: 0.12em; }
+      .mark .hint { display: none; }
     }
     .caption strong {
       color: #4a3828;
