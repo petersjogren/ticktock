@@ -177,7 +177,6 @@
       gap: clamp(6px, 1.4vw, 10px);
       width: 100%;
       min-width: 0;
-      overflow: hidden;
     }
 
     .row {
@@ -272,10 +271,11 @@
     }
 
     .anim {
+      z-index: 4;
+      visibility: hidden;
+      pointer-events: none;
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
-      z-index: 4;
-      display: none;
     }
     .anim.top {
       top: 0;
@@ -283,6 +283,8 @@
       transform-origin: bottom center;
       -webkit-transform-origin: bottom center;
       background: linear-gradient(180deg, #2c2620 0%, #161310 100%);
+      transform: perspective(420px) rotateX(0deg);
+      -webkit-transform: perspective(420px) rotateX(0deg);
     }
     .anim.bot {
       bottom: 0;
@@ -290,21 +292,34 @@
       transform-origin: top center;
       -webkit-transform-origin: top center;
       background: linear-gradient(180deg, #1a1612 0%, #100e0c 100%);
-      transform: rotateX(90deg);
-      -webkit-transform: rotateX(90deg);
+      transform: perspective(420px) rotateX(90deg);
+      -webkit-transform: perspective(420px) rotateX(90deg);
+    }
+    .mod.go .anim { visibility: visible; }
+    .mod.go .anim.top {
+      -webkit-animation: dropTop var(--flip) ease-in forwards;
+      animation: dropTop var(--flip) ease-in forwards;
+    }
+    .mod.go .anim.bot {
+      -webkit-animation: dropBot var(--flip) ease-out var(--flip) forwards;
+      animation: dropBot var(--flip) ease-out var(--flip) forwards;
     }
 
-    .mod.go .anim { display: block; }
-    .mod.go .anim.top { animation: dropTop var(--flip) ease-in forwards; }
-    .mod.go .anim.bot { animation: dropBot var(--flip) ease-out var(--flip) forwards; }
-
+    @-webkit-keyframes dropTop {
+      from { -webkit-transform: perspective(420px) rotateX(0deg); }
+      to   { -webkit-transform: perspective(420px) rotateX(-90deg); }
+    }
     @keyframes dropTop {
-      from { transform: rotateX(0deg); }
-      to   { transform: rotateX(-90deg); }
+      from { transform: perspective(420px) rotateX(0deg); }
+      to   { transform: perspective(420px) rotateX(-90deg); }
+    }
+    @-webkit-keyframes dropBot {
+      from { -webkit-transform: perspective(420px) rotateX(90deg); }
+      to   { -webkit-transform: perspective(420px) rotateX(0deg); }
     }
     @keyframes dropBot {
-      from { transform: rotateX(90deg); }
-      to   { transform: rotateX(0deg); }
+      from { transform: perspective(420px) rotateX(90deg); }
+      to   { transform: perspective(420px) rotateX(0deg); }
     }
 
     .mark {
@@ -368,7 +383,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .mod.go .anim { display: none; }
+      .mod.go .anim { visibility: hidden; }
     }
   </style>
 </head>
@@ -522,7 +537,6 @@
         const prev = current[key];
         if (prev === next) return;
         if (busy[key]) {
-          // finish instantly if a second change arrives mid-flip
           mod.classList.remove("go");
           setStatic(mod, next);
           current[key] = next;
@@ -541,28 +555,59 @@
         window.setTimeout(function () {
           try {
             if (!prev && next) mod.classList.remove("blank");
-            mod.querySelector(".anim.top span").textContent = prev;
-            mod.querySelector(".anim.bot span").textContent = next;
-            // new word's top is revealed as old top folds away
+            const animTop = mod.querySelector(".anim.top");
+            const animBot = mod.querySelector(".anim.bot");
+            animTop.querySelector("span").textContent = prev;
+            animBot.querySelector("span").textContent = next;
             mod.querySelector(".static-top span").textContent = next;
             mod.querySelector(".static-bot span").textContent = prev;
             mod.classList.toggle("blank", !next && !prev);
-            mod.classList.remove("go");
-            void mod.offsetWidth;
-            mod.classList.add("go");
 
-            const done = function () {
+            var finished = false;
+            function finish() {
+              if (finished) return;
+              finished = true;
               mod.classList.remove("go");
+              animTop.style.visibility = "";
+              animBot.style.visibility = "";
               setStatic(mod, next);
               current[key] = next;
               busy[key] = false;
-              mod.removeEventListener("animationend", onEnd);
-            };
-            const onEnd = function (ev) {
-              if (ev.target.classList.contains("bot")) done();
-            };
-            mod.addEventListener("animationend", onEnd);
-            window.setTimeout(done, 720);
+            }
+
+            var dur = 280;
+            var fromTop = "perspective(420px) rotateX(0deg)";
+            var toTop = "perspective(420px) rotateX(-90deg)";
+            var fromBot = "perspective(420px) rotateX(90deg)";
+            var toBot = "perspective(420px) rotateX(0deg)";
+
+            // Two frames so iOS Safari applies visibility before animating.
+            window.requestAnimationFrame(function () {
+              animTop.style.visibility = "visible";
+              animBot.style.visibility = "visible";
+              window.requestAnimationFrame(function () {
+                if (typeof animTop.animate === "function") {
+                  try {
+                    animTop.animate(
+                      [{ transform: fromTop }, { transform: toTop }],
+                      { duration: dur, easing: "ease-in", fill: "forwards" }
+                    );
+                    var botRun = animBot.animate(
+                      [{ transform: fromBot }, { transform: toBot }],
+                      { duration: dur, delay: dur, easing: "ease-out", fill: "forwards" }
+                    );
+                    botRun.onfinish = finish;
+                  } catch (err) {
+                    mod.classList.add("go");
+                  }
+                } else {
+                  mod.classList.remove("go");
+                  void mod.offsetWidth;
+                  mod.classList.add("go");
+                }
+                window.setTimeout(finish, dur * 2 + 120);
+              });
+            });
           } catch (err) {
             console.error(err);
             setStatic(mod, next);
