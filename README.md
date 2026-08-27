@@ -4,7 +4,7 @@ A mechanical English word clock. Time is spelled out on split-flap rolls — one
 
 Two faces, same logic:
 
-- **Wall plaque** — `index.html`
+- **Wall plaque** — live at [petersjogren.github.io/ticktock](https://petersjogren.github.io/ticktock/) (`index.html`)
 - **Terminal** — `word_clock.py`
 
 ## Word rolls
@@ -42,7 +42,9 @@ Examples: `14:01` → *one minute past two*; `14:18` → *eighteen minutes past 
 
 ## Wall plaque
 
-Open `index.html` in a browser.
+Live: https://petersjogren.github.io/ticktock/
+
+Or open `index.html` in a browser.
 
 Walnut frame on a plaster wall. Split-flap modules drop like Solari cards. TICK / TOCK flips every second; the other rolls flip when the minute (or demo) changes. Idle rolls collapse so the sentence stays packed inside the rectangle.
 
